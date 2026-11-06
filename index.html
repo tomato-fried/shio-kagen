@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-title" content="塩かげん">
+<title>スープの塩かげん</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Maru+Gothic:wght@500;700&display=swap">
+<style>
+/* Layout: 1列のホーロー鍋のような白地に藍のふち。上から「重さ→濃さ→調味料と割合→結果」の順に指で選ぶ */
+:root{
+  --bg:#f3f5f8;
+  --surface:#ffffff;
+  --ink:#1c2433;
+  --muted:#5b6578;
+  --line:#d6dce6;
+  --ai:#2b4a7e;
+  --ai-soft:#e4eaf4;
+  --on-ai:#ffffff;
+  --soy:#7a4a1e;
+  --danger:#b3261e;
+  --font-display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic",sans-serif;
+  --font-body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121722; --surface:#1b2230; --ink:#e8ecf3; --muted:#a3adbf; --line:#323c4f;
+    --ai:#8fb0e8; --ai-soft:#25324a; --on-ai:#0e1420; --soy:#e3b07a; --danger:#f2a39c; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121722; --surface:#1b2230; --ink:#e8ecf3; --muted:#a3adbf; --line:#323c4f;
+  --ai:#8fb0e8; --ai-soft:#25324a; --on-ai:#0e1420; --soy:#e3b07a; --danger:#f2a39c; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--font-body); font-size:17px; line-height:1.6;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:20px 40px;
+}
+main{max-width:520px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr); gap:18px}
+h1{font-family:var(--font-display); font-weight:700; font-size:1.6rem; line-height:1.3; margin:0; text-wrap:balance}
+.lead{margin:4px 0 0; color:var(--muted); font-size:.95rem}
+section{background:var(--surface); border:2px solid var(--line); border-radius:14px; padding:16px; display:grid; grid-template-columns:minmax(0,1fr); gap:12px; min-width:0}
+h2{font-family:var(--font-display); font-weight:700; font-size:1.1rem; margin:0; display:flex; align-items:baseline; gap:8px}
+h2 .step{color:var(--ai); font-size:.95rem}
+h3{font-family:var(--font-display); font-weight:700; font-size:1rem; margin:0}
+.hint{margin:0; color:var(--muted); font-size:.88rem}
+
+input[type=number], input[type=text]{
+  font:700 1.15rem var(--font-body); font-variant-numeric:tabular-nums;
+  padding:8px 10px; border:2px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink);
+}
+input:focus{outline:3px solid var(--ai); outline-offset:1px; border-color:var(--ai)}
+.weight-row{display:flex; align-items:center; gap:10px}
+.weight-row input{flex:1; width:0; min-width:0; font-size:1.9rem; padding:10px 12px; border-radius:10px; text-align:right}
+.unit{font-size:1.3rem; font-weight:700}
+.quick{display:flex; flex-wrap:wrap; gap:8px}
+
+button{font:inherit; color:var(--ink); cursor:pointer}
+button:focus-visible{outline:3px solid var(--ai); outline-offset:2px}
+.chips{display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:8px}
+.chips.three{grid-template-columns:repeat(3,1fr)}
+.chip, .quick-btn, .btn{background:var(--bg); border:2px solid var(--line); border-radius:10px; padding:10px 8px; text-align:center; line-height:1.3}
+.quick-btn{padding:6px 14px; font-size:.95rem}
+.chip small{display:block; color:var(--muted); font-size:.78rem; margin-top:2px}
+.chip[aria-pressed="true"]{background:var(--ai); border-color:var(--ai); color:var(--on-ai)}
+.chip[aria-pressed="true"] small{color:var(--on-ai); opacity:.85}
+.btn{padding:8px 14px; font-weight:700}
+.btn.primary{background:var(--ai); border-color:var(--ai); color:var(--on-ai)}
+.btn.del{color:var(--danger); border-color:var(--line); font-size:.9rem; padding:6px 10px}
+.btn.del.arm{background:var(--danger); border-color:var(--danger); color:var(--surface)}
+
+.ratios{display:grid; gap:8px; border-top:2px dashed var(--line); padding-top:12px}
+.ratio-row{display:flex; align-items:center; gap:8px}
+.ratio-row .rname{flex:1; min-width:0; font-weight:700}
+.ratio-row .rname small{display:block; font-weight:400; color:var(--muted); font-size:.85rem; font-variant-numeric:tabular-nums}
+select{font:700 1.05rem var(--font-body); padding:8px 6px; border:2px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink)}
+.stepper{display:flex; align-items:center; gap:4px}
+.stepper button{width:44px; height:44px; border-radius:10px; border:2px solid var(--line); background:var(--bg); font-size:1.3rem; font-weight:700}
+.stepper output{min-width:2.2em; text-align:center; font-size:1.3rem; font-weight:700; font-variant-numeric:tabular-nums}
+
+.mine{display:grid; gap:8px}
+.mine-row{display:flex; align-items:center; gap:8px; padding:8px 10px; border:2px solid var(--line); border-radius:10px}
+.mine-row .info{flex:1; min-width:0}
+.mine-row .info b{display:block}
+.mine-row .info span{color:var(--muted); font-size:.85rem}
+details{border-top:2px dashed var(--line); padding-top:12px}
+summary{cursor:pointer; font-weight:700; color:var(--ai)}
+.form{display:grid; gap:10px; margin-top:10px}
+.field{display:grid; gap:4px}
+.field label{font-size:.9rem; color:var(--muted)}
+.field-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.field-row input[type=number]{width:6.5em; text-align:right}
+.field input[type=text]{width:100%}
+.error{margin:0; color:var(--danger); font-size:.9rem}
+
+.result{border-color:var(--ai); background:var(--ai-soft)}
+.total{margin:0; font-variant-numeric:tabular-nums}
+.total b{font-size:1.15rem}
+.res-list{display:grid; gap:10px}
+.res-item{background:var(--surface); border-radius:10px; padding:12px; display:grid; gap:2px}
+.res-item .name{font-family:var(--font-display); font-weight:700; margin:0}
+.res-item .amount{margin:0; font-weight:700; font-size:2.2rem; line-height:1.15; color:var(--soy); font-variant-numeric:tabular-nums}
+.res-item .amount span{font-size:1.1rem; margin-left:4px; color:var(--ink)}
+.res-item .spoon{margin:0; font-size:1.1rem; font-weight:700}
+.res-item .salt{margin:0; color:var(--muted); font-size:.85rem; font-variant-numeric:tabular-nums}
+.empty{margin:0; color:var(--muted)}
+
+.notes{font-size:.85rem; color:var(--muted); display:grid; gap:6px; padding:0 4px}
+.notes p{margin:0}
+@media (prefers-reduced-motion: no-preference){ .chip{transition:background .12s, border-color .12s} }
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+</style>
+</head>
+<body>
+
+<main>
+  <header>
+    <h1>スープの塩かげん</h1>
+    <p class="lead">鍋に入れた食材と水の重さから、調味料をどれだけ入れればよいかを計算します。</p>
+  </header>
+
+  <section aria-labelledby="h-weight">
+    <h2 id="h-weight"><span class="step">1</span>全部の重さ</h2>
+    <p class="hint">食材と水を全部入れた重さを入れてください。鍋ごと量った場合は、鍋の重さを引いてください。</p>
+    <div class="weight-row">
+      <input id="weight" type="number" inputmode="decimal" min="0" step="1" value="800" aria-label="全部の重さ（グラム）">
+      <span class="unit">g</span>
+    </div>
+    <div class="quick" aria-label="よく使う重さ">
+      <button class="quick-btn" type="button" data-w="400">400g</button>
+      <button class="quick-btn" type="button" data-w="600">600g</button>
+      <button class="quick-btn" type="button" data-w="800">800g</button>
+      <button class="quick-btn" type="button" data-w="1500">1500g</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-level">
+    <h2 id="h-level"><span class="step">2</span>味の濃さ</h2>
+    <div class="chips three" id="levels" role="group" aria-labelledby="h-level"></div>
+  </section>
+
+  <section aria-labelledby="h-season">
+    <h2 id="h-season"><span class="step">3</span>使う調味料</h2>
+    <p class="hint">使う調味料をすべて押してください。もう一度押すと外れます。</p>
+    <div class="chips" id="seasonings" role="group" aria-labelledby="h-season"></div>
+    <div class="ratios" id="ratios" hidden>
+      <h3>味つけの割合</h3>
+      <p class="hint">どの調味料で多く味をつけるかを、数字で決めます。数字を大きくした調味料ほど、たくさん入ります。</p>
+      <div id="ratioRows" class="ratios-list" style="display:grid; gap:8px"></div>
+    </div>
+  </section>
+
+  <section class="result" aria-live="polite" id="result"></section>
+
+  <section aria-labelledby="h-mine">
+    <h2 id="h-mine">自分で追加した調味料</h2>
+    <p class="hint">追加した調味料は、このスマホのこのブラウザに保存されます。</p>
+    <div class="mine" id="mineList"></div>
+    <details id="addBox">
+      <summary>調味料を追加する</summary>
+      <form class="form" id="addForm" novalidate>
+        <div class="field">
+          <label for="fName">名前</label>
+          <input id="fName" type="text" placeholder="例：いつもの白だし" maxlength="30">
+        </div>
+        <div class="field">
+          <label for="fPer">栄養成分表示の「〇〇あたり」の量。多くの商品は100gか100mlです。</label>
+          <div class="field-row">
+            <input id="fPer" type="number" inputmode="decimal" min="0" step="0.1" value="100">
+            <select id="fBasis" aria-label="量の単位"><option value="g">g</option><option value="ml">ml</option></select>
+            <span>あたり</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fSalt">その量に入っている食塩相当量</label>
+          <div class="field-row">
+            <span>食塩相当量</span>
+            <input id="fSalt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="9.2">
+            <span>g</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fUnit">「1袋（4.5g）あたり」のように袋や個の数で書かれているときだけ、数え方を入れてください。結果に「約○袋分」と表示します。</label>
+          <div class="field-row">
+            <span>1</span>
+            <input id="fUnit" type="text" placeholder="なし" maxlength="4" style="width:5em">
+          </div>
+        </div>
+        <p class="error" id="fError" hidden></p>
+        <div><button class="btn primary" type="submit">追加する</button></div>
+      </form>
+    </details>
+  </section>
+
+  <div class="notes">
+    <p>計算のしかた：全部の重さ × 味の濃さ（％）＝ 入れる塩分。その塩分を割合どおりに分けて、調味料ごとの塩分の割合から入れる量を出しています。</p>
+    <p>はじめから入っている調味料の塩分は、日本食品標準成分表などの代表的な値です。白だしなど商品によって塩分が大きく違うものは、袋の数字で追加して使ってください。</p>
+    <p>最初は少なめに入れて味見してから足してください。ベーコンやソーセージなど塩気のある具を入れたときは、調味料を少し減らしてください。</p>
+  </div>
+</main>
+
+<script>
+(function(){
+  // perG: 基準の量(g)、salt: その量に入っている食塩相当量(g)、tsp: 小さじ1杯の重さ(g)
+  var BUILTIN = [
+    {id:"salt",  name:"塩",              note:"",          perG:100, salt:99.5, tsp:6},
+    {id:"miso",  name:"味噌",            note:"ふつうの辛口", perG:100, salt:12.4, tsp:6},
+    {id:"koi",   name:"しょうゆ",         note:"こいくち",    perG:100, salt:14.5, tsp:6},
+    {id:"usu",   name:"うすくちしょうゆ",  note:"",          perG:100, salt:16.0, tsp:6},
+    {id:"shiro", name:"白だし",           note:"商品で差が大きい", perG:100, salt:9.2, tsp:6},
+    {id:"conso", name:"コンソメ",         note:"顆粒",       perG:100, salt:43.2, tsp:3},
+    {id:"dashi", name:"和風だしの素",      note:"顆粒",       perG:100, salt:40.6, tsp:3},
+    {id:"gara",  name:"鶏ガラスープの素",  note:"顆粒",       perG:100, salt:47.5, tsp:2.5},
+    {id:"tsuyu", name:"めんつゆ",         note:"3倍濃縮",    perG:100, salt:9.9,  tsp:6}
+  ];
+  var LEVELS = [
+    {id:"light",  name:"うすめ", pct:0.6},
+    {id:"normal", name:"ふつう", pct:0.8},
+    {id:"strong", name:"こいめ", pct:1.0}
+  ];
+  var KEY = "shio-kagen";
+
+  var state = {selected:["miso","dashi"], ratios:{miso:2, dashi:1}, level:"normal", weight:"800", customs:[]};
+  try{
+    var saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    if(saved && typeof saved === "object"){
+      if(Array.isArray(saved.customs)) state.customs = saved.customs.filter(function(c){ return c && c.id && c.name && c.perG > 0 && c.salt > 0; });
+      if(Array.isArray(saved.selected)) state.selected = saved.selected;
+      else if(saved.season && saved.season !== "custom") state.selected = [saved.season];
+      if(saved.ratios && typeof saved.ratios === "object") state.ratios = saved.ratios;
+      if(LEVELS.some(function(l){ return l.id === saved.level; })) state.level = saved.level;
+      if(saved.weight) state.weight = saved.weight;
+    }
+  }catch(e){}
+
+  var $ = function(id){ return document.getElementById(id); };
+  var weightEl = $("weight");
+  weightEl.value = state.weight;
+
+  function all(){ return BUILTIN.concat(state.customs); }
+  function find(id){ return all().find(function(s){ return s.id === id; }); }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify({selected:state.selected, ratios:state.ratios, level:state.level, weight:weightEl.value, customs:state.customs})); }catch(e){}
+  }
+  function el(tag, cls, text){ var e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; }
+
+  // 濃さ
+  LEVELS.forEach(function(l){
+    var b = el("button", "chip", l.name); b.type = "button"; b.dataset.id = l.id;
+    b.appendChild(el("small", null, "塩分" + l.pct + "%"));
+    b.addEventListener("click", function(){ state.level = l.id; render(); });
+    $("levels").appendChild(b);
+  });
+
+  document.querySelectorAll(".quick-btn").forEach(function(b){
+    b.addEventListener("click", function(){ weightEl.value = b.dataset.w; render(); });
+  });
+  weightEl.addEventListener("input", render);
+
+  function toggle(id){
+    var i = state.selected.indexOf(id);
+    if(i >= 0) state.selected.splice(i, 1);
+    else { state.selected.push(id); if(!(state.ratios[id] > 0)) state.ratios[id] = 1; }
+    render();
+  }
+
+  function renderChips(){
+    var box = $("seasonings"); box.textContent = "";
+    all().forEach(function(s){
+      var b = el("button", "chip", s.name); b.type = "button";
+      b.setAttribute("aria-pressed", String(state.selected.indexOf(s.id) >= 0));
+      var sub = s.custom ? (s.unit ? "1" + s.unit + " " + s.perG + (s.basis === "ml" ? "ml" : "g") : "自分で追加") : s.note;
+      if(sub) b.appendChild(el("small", null, sub));
+      b.addEventListener("click", function(){ toggle(s.id); });
+      box.appendChild(b);
+    });
+  }
+
+  function renderRatios(){
+    var sel = state.selected.map(find).filter(Boolean);
+    $("ratios").hidden = sel.length < 2;
+    var rows = $("ratioRows"); rows.textContent = "";
+    if(sel.length < 2) return;
+    var sum = sel.reduce(function(a, s){ return a + (state.ratios[s.id] > 0 ? state.ratios[s.id] : 1); }, 0);
+    sel.forEach(function(s){
+      var r = state.ratios[s.id] > 0 ? state.ratios[s.id] : 1;
+      var row = el("div", "ratio-row");
+      var nm = el("span", "rname", s.name);
+      nm.appendChild(el("small", null, "味つけの" + Math.round(r / sum * 100) + "%"));
+      row.appendChild(nm);
+      var st = el("div", "stepper");
+      var minus = el("button", null, "−"); minus.type = "button"; minus.setAttribute("aria-label", s.name + "の割合を1減らす");
+      var out = el("output", null, String(r));
+      var plus = el("button", null, "+"); plus.type = "button"; plus.setAttribute("aria-label", s.name + "の割合を1増やす");
+      minus.addEventListener("click", function(){ state.ratios[s.id] = Math.max(1, r - 1); render(); });
+      plus.addEventListener("click", function(){ state.ratios[s.id] = Math.min(10, r + 1); render(); });
+      st.appendChild(minus); st.appendChild(out); st.appendChild(plus);
+      row.appendChild(st);
+      rows.appendChild(row);
+    });
+  }
+
+  var FRAC = {0:"", 0.25:"¼", 0.5:"½", 0.75:"¾"};
+  function spoonText(tsp){
+    var q = Math.round(tsp * 4) / 4;
+    if(q <= 0) return "小さじ¼より少なめ";
+    var big = Math.floor(q / 3 + 1e-9);
+    var rem = Math.round((q - big * 3) * 4) / 4;
+    var whole = Math.floor(rem + 1e-9);
+    var f = Math.round((rem - whole) * 4) / 4;
+    var small = rem > 0 ? "小さじ" + (whole > 0 ? String(whole) : "") + FRAC[f] : "";
+    if(big > 0) return "大さじ" + big + (small ? "と" + small : "");
+    return small;
+  }
+  function fmt(g){ return g < 10 ? (Math.round(g * 10) / 10).toFixed(1) : String(Math.round(g)); }
+  function fmtCount(n){ return (Math.round(n * 10) / 10).toString(); }
+
+  function renderResult(){
+    var res = $("result"); res.textContent = "";
+    var w = parseFloat(weightEl.value);
+    var lv = LEVELS.find(function(x){ return x.id === state.level; });
+    var sel = state.selected.map(find).filter(Boolean);
+    if(!(w > 0)){ res.appendChild(el("p", "empty", "1番に、食材と水を合わせた重さを入れてください。")); return; }
+    if(sel.length === 0){ res.appendChild(el("p", "empty", "3番で、使う調味料を1つ以上選んでください。")); return; }
+
+    var saltG = w * lv.pct / 100;
+    var total = el("p", "total");
+    total.appendChild(document.createTextNode("全部の重さ " + Math.round(w) + "g × 塩分" + lv.pct + "% ＝ "));
+    total.appendChild(el("b", null, "入れる塩分 " + fmt(saltG) + "g"));
+    res.appendChild(total);
+
+    var sum = sel.reduce(function(a, s){ return a + (sel.length > 1 ? (state.ratios[s.id] || 1) : 1); }, 0);
+    var list = el("div", "res-list");
+    sel.forEach(function(s){
+      var share = (sel.length > 1 ? (state.ratios[s.id] || 1) : 1) / sum;
+      var mySalt = saltG * share;
+      var g = mySalt * s.perG / s.salt;
+      var item = el("div", "res-item");
+      item.appendChild(el("p", "name", s.name));
+      if(s.basis === "ml"){
+        // 表示がml基準の液体は、計量スプーン（小さじ1杯＝5ml）で表す
+        item.appendChild(el("p", "amount", spoonText(g / 5)));
+        if(s.unit) item.appendChild(el("p", "spoon", "約" + fmtCount(g / s.perG) + s.unit + "分"));
+        item.appendChild(el("p", "salt", "この調味料でつける塩分 " + fmt(mySalt) + "g"));
+        list.appendChild(item);
+        return;
+      }
+      var amt = el("p", "amount", "約" + fmt(g)); amt.appendChild(el("span", null, "g")); item.appendChild(amt);
+      if(s.tsp) item.appendChild(el("p", "spoon", "計量スプーンなら " + spoonText(g / s.tsp) + " くらい"));
+      else if(s.unit) item.appendChild(el("p", "spoon", "約" + fmtCount(g / s.perG) + s.unit + "分"));
+      item.appendChild(el("p", "salt", "この調味料でつける塩分 " + fmt(mySalt) + "g"));
+      list.appendChild(item);
+    });
+    res.appendChild(list);
+  }
+
+  function renderMine(){
+    var box = $("mineList"); box.textContent = "";
+    if(state.customs.length === 0){ box.appendChild(el("p", "empty", "まだ追加した調味料はありません。")); return; }
+    state.customs.forEach(function(c){
+      var row = el("div", "mine-row");
+      var info = el("div", "info");
+      info.appendChild(el("b", null, c.name));
+      var u = c.basis === "ml" ? "ml" : "g";
+      info.appendChild(el("span", null, (c.unit ? "1" + c.unit + "（" + c.perG + u + "）" : c.perG + u) + "あたり 食塩相当量 " + c.salt + "g"));
+      row.appendChild(info);
+      var del = el("button", "btn del", "削除"); del.type = "button";
+      var timer = null;
+      del.addEventListener("click", function(){
+        if(!del.classList.contains("arm")){
+          del.classList.add("arm"); del.textContent = "もう一度押すと削除";
+          timer = setTimeout(function(){ del.classList.remove("arm"); del.textContent = "削除"; }, 3000);
+          return;
+        }
+        clearTimeout(timer);
+        state.customs = state.customs.filter(function(x){ return x.id !== c.id; });
+        state.selected = state.selected.filter(function(id){ return id !== c.id; });
+        delete state.ratios[c.id];
+        render();
+      });
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+
+  $("addForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var name = $("fName").value.trim();
+    var per = parseFloat($("fPer").value);
+    var salt = parseFloat($("fSalt").value);
+    var unit = $("fUnit").value.trim();
+    var basis = $("fBasis").value === "ml" ? "ml" : "g";
+    var err = $("fError");
+    var msg = "";
+    if(!name) msg = "名前を入れてください。";
+    else if(!(per > 0)) msg = "袋に書かれている量を、0より大きいグラム数で入れてください。";
+    else if(!(salt > 0)) msg = "食塩相当量を、0より大きいグラム数で入れてください。";
+    else if(basis === "g" && salt > per) msg = "食塩相当量が、書かれている量より多くなっています。数字を確かめてください。";
+    if(msg){ err.textContent = msg; err.hidden = false; return; }
+    err.hidden = true;
+    var c = {id:"c" + Date.now(), name:name, perG:per, basis:basis, salt:salt, unit:unit, custom:true};
+    state.customs.push(c);
+    state.selected.push(c.id); state.ratios[c.id] = 1;
+    $("addForm").reset(); $("fPer").value = "100";
+    $("addBox").open = false;
+    render();
+  });
+
+  function render(){
+    document.querySelectorAll("#levels .chip").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.id === state.level)); });
+    state.selected = state.selected.filter(function(id){ return !!find(id); });
+    renderChips(); renderRatios(); renderResult(); renderMine(); save();
+  }
+  render();
+})();
+</script>
+
+</body>
+</html>
